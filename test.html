@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF工具测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .btn {
+      padding: 10px 20px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    .btn:hover {
+      background: #4338ca;
+    }
+    .result {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f5f5f5;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>PDF工具测试页面</h1>
+
+  <div class="test-section">
+    <h2>1. 测试服务器连接</h2>
+    <button class="btn" onclick="testConnection()">测试连接</button>
+    <div class="result" id="connectionResult"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>2. 测试PDF合并</h2>
+    <input type="file" id="mergeFiles" multiple accept=".pdf">
+    <button class="btn" onclick="testMerge()">测试合并</button>
+    <div class="result" id="mergeResult"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>3. 测试PDF压缩</h2>
+    <input type="file" id="compressFile" accept=".pdf">
+    <button class="btn" onclick="testCompress()">测试压缩</button>
+    <div class="result" id="compressResult"></div>
+  </div>
+
+  <script>
+    async function testConnection() {
+      try {
+        const response = await fetch('/');
+        if (response.ok) {
+          document.getElementById('connectionResult').innerHTML = '✅ 服务器连接成功！';
+        } else {
+          document.getElementById('connectionResult').innerHTML = '❌ 服务器连接失败';
+        }
+      } catch (error) {
+        document.getElementById('connectionResult').innerHTML = '❌ 连接错误: ' + error.message;
+      }
+    }
+
+    async function testMerge() {
+      const files = document.getElementById('mergeFiles').files;
+      if (files.length < 2) {
+        alert('请选择至少2个PDF文件');
+        return;
+      }
+
+      const formData = new FormData();
+      for (let file of files) {
+        formData.append('files', file);
+      }
+
+      try {
+        const response = await fetch('/api/pdf/merge', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'merged.pdf';
+          a.click();
+          document.getElementById('mergeResult').innerHTML = '✅ PDF合并成功！';
+        } else {
+          document.getElementById('mergeResult').innerHTML = '❌ 合并失败';
+        }
+      } catch (error) {
+        document.getElementById('mergeResult').innerHTML = '❌ 错误: ' + error.message;
+      }
+    }
+
+    async function testCompress() {
+      const file = document.getElementById('compressFile').files[0];
+      if (!file) {
+        alert('请选择一个PDF文件');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('/api/pdf/compress', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'compressed.pdf';
+          a.click();
+          document.getElementById('compressResult').innerHTML = '✅ PDF压缩成功！';
+        } else {
+          document.getElementById('compressResult').innerHTML = '❌ 压缩失败';
+        }
+      } catch (error) {
+        document.getElementById('compressResult').innerHTML = '❌ 错误: ' + error.message;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "name": "pdf-tools",
+  "builds": [
+    {
+      "src": "src/app.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "src/app.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "src/app.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "regions": ["iad1", "sfo1", "lhr1", "hnd1"],
+  "github": {
+    "enabled": true,
+    "autoAlias": true
+  }
+}

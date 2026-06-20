@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Office转PDF - 免费在线PDF工具</title>
+  <meta name="description" content="免费在线Office转PDF工具，支持Word、Excel、PPT转PDF。简单快速，无需安装。">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo">PDF工具矩阵</a>
+      <ul class="nav-links">
+        <li><a href="/merge">PDF合并</a></li>
+        <li><a href="/compress">PDF压缩</a></li>
+        <li><a href="/convert">PDF转换</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="tool-page">
+    <div class="container">
+      <div class="tool-header">
+        <h1>📄 Office转PDF</h1>
+        <p>将Word、Excel、PPT文件转换为PDF格式</p>
+      </div>
+
+      <div class="upload-area" id="dropZone">
+        <div class="upload-icon">📁</div>
+        <div class="upload-text">拖拽Office文件到这里，或点击选择文件</div>
+        <div class="upload-hint">支持 .docx、.xlsx、.pptx 格式，最大100MB</div>
+        <input type="file" id="fileInput" class="file-input" accept=".docx,.xlsx,.pptx,.doc,.xls,.ppt">
+      </div>
+
+      <div class="file-list" id="fileList"></div>
+
+      <div class="progress-container" id="progressContainer" style="display: none;">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%; height: 20px; background: linear-gradient(90deg, #4f46e5, #7c3aed); border-radius: 10px; transition: width 0.3s ease;"></div>
+        </div>
+        <div class="progress-text" id="progressText">转换中...</div>
+      </div>
+
+      <button class="process-btn" id="convertBtn" disabled>📄 转换为PDF</button>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container"><p>&copy; 2024 PDF工具矩阵</p></div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    const uploader = new FileUploader({
+      dropZone: document.getElementById('dropZone'),
+      fileInput: document.getElementById('fileInput'),
+      fileList: document.getElementById('fileList'),
+      maxFiles: 1,
+      allowedTypes: [
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/msword',
+        'application/vnd.ms-excel',
+        'application/vnd.ms-powerpoint'
+      ]
+    });
+
+    const convertBtn = document.getElementById('convertBtn');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+
+    const origAdd = uploader.addFiles.bind(uploader);
+    uploader.addFiles = function(files) { origAdd(files); updateUI(); };
+    const origRemove = uploader.removeFile.bind(uploader);
+    uploader.removeFile = function(index) { origRemove(index); updateUI(); };
+
+    function updateUI() {
+      convertBtn.disabled = uploader.getFiles().length === 0;
+    }
+
+    convertBtn.addEventListener('click', async () => {
+      const files = uploader.getFiles();
+      if (!files.length) return;
+
+      progressContainer.style.display = 'block';
+      utils.showLoading(convertBtn);
+
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) { clearInterval(interval); progress = 90; }
+        progressFill.style.width = progress + '%';
+        progressText.textContent = '转换中... ' + Math.round(progress) + '%';
+      }, 200);
+
+      const fd = new FormData();
+      fd.append('file', files[0]);
+
+      try {
+        const r = await fetch('/api/pdf/office-to-pdf', { method: 'POST', body: fd });
+        clearInterval(interval);
+        if (!r.ok) throw new Error('转换失败');
+
+        progressFill.style.width = '100%';
+        progressText.textContent = '转换完成！';
+
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'converted.pdf';
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        utils.showMessage('转换成功！', 'success');
+      } catch(e) {
+        utils.showMessage('转换失败: ' + e.message, 'error');
+      } finally {
+        utils.hideLoading(convertBtn);
+        setTimeout(() => { progressContainer.style.display = 'none'; progressFill.style.width = '0%'; }, 2000);
+      }
+    });
+
+    updateUI();
+  </script>
+</body>
+</html>

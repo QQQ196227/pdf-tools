@@ -1,0 +1,54 @@
+# 依赖
+node_modules/
+package-lock.json
+
+# 上传和临时文件
+uploads/
+temp/
+
+# 环境变量
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 日志
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 运行时数据
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 构建产物
+dist/
+build/
+
+# 调试
+.npm
+.eslintcache
+.node_repl_history
+
+# 输出
+*.tgz
+.yarn-integrity
+
+# 缓存
+.cache
+.parcel-cache

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>定价 - PDF工具矩阵</title>
+  <meta name="description" content="PDF工具矩阵定价方案，免费版和付费版功能对比。">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .pricing-hero {
+      background: var(--gradient);
+      color: white;
+      padding: 80px 0;
+      text-align: center;
+    }
+
+    .pricing-hero h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+    }
+
+    .pricing-hero p {
+      font-size: 1.25rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 32px;
+      padding: 80px 0;
+    }
+
+    .pricing-card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .pricing-card.popular {
+      border: 2px solid var(--primary-color);
+    }
+
+    .pricing-card.popular::before {
+      content: '最受欢迎';
+      position: absolute;
+      top: 20px;
+      right: -30px;
+      background: var(--gradient);
+      color: white;
+      padding: 8px 40px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transform: rotate(45deg);
+    }
+
+    .pricing-header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .pricing-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text-color);
+    }
+
+    .pricing-price {
+      margin-bottom: 8px;
+    }
+
+    .price-amount {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--primary-color);
+    }
+
+    .price-period {
+      color: var(--light-text);
+      font-size: 1rem;
+    }
+
+    .pricing-description {
+      color: var(--light-text);
+      font-size: 0.95rem;
+    }
+
+    .pricing-features {
+      list-style: none;
+      margin-bottom: 32px;
+    }
+
+    .pricing-features li {
+      padding: 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-color);
+      font-size: 0.95rem;
+    }
+
+    .pricing-features li::before {
+      content: '✓';
+      color: #10b981;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .pricing-features li.disabled {
+      color: var(--light-text);
+      opacity: 0.6;
+    }
+
+    .pricing-features li.disabled::before {
+      content: '✗';
+      color: #ef4444;
+    }
+
+    .pricing-cta {
+      text-align: center;
+    }
+
+    .pricing-cta .btn {
+      width: 100%;
+      padding: 16px;
+      font-size: 1.1rem;
+    }
+
+    .pricing-cta .btn-secondary {
+      background: var(--border-color);
+      color: var(--text-color);
+    }
+
+    .pricing-cta .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .faq-section {
+      padding: 80px 0;
+      background: var(--background-color);
+    }
+
+    .faq-section h2 {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 60px;
+    }
+
+    .faq-grid {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .faq-item {
+      background: white;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+    }
+
+    .faq-question {
+      padding: 20px 24px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      color: var(--text-color);
+      transition: var(--transition);
+    }
+
+    .faq-question:hover {
+      background: rgba(79, 70, 229, 0.05);
+    }
+
+    .faq-question::after {
+      content: '+';
+      font-size: 1.5rem;
+      color: var(--primary-color);
+      transition: transform 0.3s ease;
+    }
+
+    .faq-item.active .faq-question::after {
+      transform: rotate(45deg);
+    }
+
+    .faq-answer {
+      padding: 0 24px;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      color: var(--light-text);
+      line-height: 1.6;
+    }
+
+    .faq-item.active .faq-answer {
+      padding: 0 24px 20px;
+      max-height: 200px;
+    }
+
+    @media (max-width: 768px) {
+      .pricing-hero h1 {
+        font-size: 2rem;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        padding: 40px 0;
+      }
+
+      .pricing-card.popular::before {
+        top: 10px;
+        right: -35px;
+        font-size: 0.75rem;
+        padding: 6px 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo">PDF工具矩阵</a>
+      <ul class="nav-links">
+        <li><a href="/merge">PDF合并</a></li>
+        <li><a href="/compress">PDF压缩</a></li>
+        <li><a href="/convert">PDF转换</a></li>
+        <li><a href="/pricing">定价</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- 定价横幅 -->
+  <section class="pricing-hero">
+    <div class="container">
+      <h1>简单透明的定价</h1>
+      <p>选择适合您的方案，开始高效处理PDF文件</p>
+    </div>
+  </section>
+
+  <!-- 定价卡片 -->
+  <section class="pricing-section">
+    <div class="container">
+      <div class="pricing-grid">
+        <!-- 免费版 -->
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <div class="pricing-name">免费版</div>
+            <div class="pricing-price">
+              <span class="price-amount">$0</span>
+              <span class="price-period">/永久</span>
+            </div>
+            <div class="pricing-description">适合个人偶尔使用</div>
+          </div>
+          <ul class="pricing-features">
+            <li>每天处理3个文件</li>
+            <li>文件大小限制10MB</li>
+            <li>基础PDF工具</li>
+            <li>有广告展示</li>
+            <li class="disabled">批量处理</li>
+            <li class="disabled">AI高级功能</li>
+            <li class="disabled">优先客服支持</li>
+          </ul>
+          <div class="pricing-cta">
+            <a href="/" class="btn btn-secondary">开始使用</a>
+          </div>
+        </div>
+
+        <!-- 付费版 -->
+        <div class="pricing-card popular">
+          <div class="pricing-header">
+            <div class="pricing-name">付费版</div>
+            <div class="pricing-price">
+              <span class="price-amount">$4.99</span>
+              <span class="price-period">/月</span>
+            </div>
+            <div class="pricing-description">或 $29.99/年（节省40%）</div>
+          </div>
+          <ul class="pricing-features">
+            <li>无限次处理文件</li>
+            <li>文件大小限制100MB</li>
+            <li>所有PDF工具</li>
+            <li>无广告体验</li>
+            <li>批量处理功能</li>
+            <li>AI高级功能</li>
+            <li>优先客服支持</li>
+          </ul>
+          <div class="pricing-cta">
+            <button class="btn btn-primary" id="upgradeBtn">
+              立即升级
+            </button>
+          </div>
+        </div>
+
+        <!-- 企业版 -->
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <div class="pricing-name">企业版</div>
+            <div class="pricing-price">
+              <span class="price-amount">$9.99</span>
+              <span class="price-period">/月</span>
+            </div>
+            <div class="pricing-description">适合团队和企业使用</div>
+          </div>
+          <ul class="pricing-features">
+            <li>所有付费版功能</li>
+            <li>文件大小限制500MB</li>
+            <li>团队协作功能</li>
+            <li>API接口访问</li>
+            <li>专属客服经理</li>
+            <li>自定义品牌</li>
+            <li>高级数据分析</li>
+          </ul>
+          <div class="pricing-cta">
+            <button class="btn btn-primary" id="enterpriseBtn">
+              联系我们
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 常见问题 -->
+  <section class="faq-section">
+    <div class="container">
+      <h2>常见问题</h2>
+      <div class="faq-grid">
+        <div class="faq-item">
+          <div class="faq-question">免费版有什么限制？</div>
+          <div class="faq-answer">
+            免费版每天可以处理3个文件，每个文件最大10MB。您可以使用所有基础PDF工具，但会有广告展示。如果您需要更多功能，可以升级到付费版。
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">付费版支持哪些支付方式？</div>
+          <div class="faq-answer">
+            我们支持多种支付方式，包括信用卡、借记卡、PayPal、Apple Pay等。所有支付都通过Stripe安全处理，您的支付信息完全加密。
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">可以随时取消订阅吗？</div>
+          <div class="faq-answer">
+            是的，您可以随时取消订阅。取消后，您的付费功能将在当前计费周期结束后失效。我们不会收取任何取消费用。
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">我的文件安全吗？</div>
+          <div class="faq-answer">
+            绝对安全。所有文件处理都在服务器端完成，处理完成后会立即删除。我们不会存储您的任何文件内容。所有数据传输都使用HTTPS加密。
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">支持哪些文件格式？</div>
+          <div class="faq-answer">
+            我们支持PDF、JPG、PNG等常见格式。PDF工具支持所有标准PDF文件，图片工具支持JPG和PNG格式。我们还在不断添加新的格式支持。
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">如何联系客服？</div>
+          <div class="faq-answer">
+            您可以通过页面底部的"联系我们"链接发送邮件给我们。付费版用户享有优先客服支持，通常会在24小时内收到回复。企业版用户有专属客服经理。
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2024 PDF工具矩阵 - 免费在线PDF处理工具</p>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/ad.js"></script>
+  <script>
+    // 处理升级
+    document.getElementById('upgradeBtn').addEventListener('click', () => {
+      fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: 'price_monthly' }),
+      })
+      .then(r => r.json())
+      .then(data => { if (data.url) window.location.href = data.url; })
+      .catch(() => utils.showMessage('支付处理失败，请稍后重试', 'error'));
+    });
+
+    // 处理企业版
+    document.getElementById('enterpriseBtn').addEventListener('click', () => {
+      window.location.href = 'mailto:enterprise@pdftools.com?subject=企业版咨询';
+    });
+
+    // FAQ折叠功能
+    document.querySelectorAll('.faq-question').forEach(question => {
+      question.addEventListener('click', () => {
+        const item = question.parentElement;
+        const isActive = item.classList.contains('active');
+
+        // 关闭所有FAQ
+        document.querySelectorAll('.faq-item').forEach(faq => {
+          faq.classList.remove('active');
+        });
+
+        // 打开当前FAQ（如果之前是关闭的）
+        if (!isActive) {
+          item.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

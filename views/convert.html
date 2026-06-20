@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF转换 - 免费在线PDF工具</title>
+  <meta name="description" content="免费在线PDF转换工具，支持PDF转图片、图片转PDF。简单快速，无需安装。">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* 转换模式选择 */
+    .convert-mode {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 15px;
+      border: 2px solid #e5e7eb;
+      background: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .mode-btn:hover {
+      border-color: #4f46e5;
+    }
+
+    .mode-btn.active {
+      border-color: #4f46e5;
+      background: #4f46e5;
+      color: white;
+    }
+
+    /* 文件预览 */
+    .file-preview {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .preview-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .preview-icon {
+      font-size: 2rem;
+    }
+
+    .preview-details h3 {
+      margin-bottom: 5px;
+    }
+
+    .preview-details p {
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+    }
+
+    .preview-item {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .preview-thumb {
+      width: 60px;
+      height: 80px;
+      background: #e5e7eb;
+      border-radius: 5px;
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .preview-name {
+      font-size: 0.8rem;
+      color: #6b7280;
+      word-break: break-all;
+    }
+
+    /* 转换选项 */
+    .convert-options {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .convert-options h3 {
+      margin-bottom: 15px;
+      color: #1f2937;
+    }
+
+    .option-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .option-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .option-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 10px 15px;
+      background: #f9fafb;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .option-group label:hover {
+      background: #f3f4f6;
+    }
+
+    /* 进度条 */
+    .progress-container {
+      margin: 20px 0;
+      display: none;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+      border-radius: 10px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .progress-text {
+      text-align: center;
+      margin-top: 10px;
+      color: #6b7280;
+    }
+
+    /* 结果容器 */
+    .result-container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      display: none;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .result-icon {
+      font-size: 2rem;
+    }
+
+    .result-details h3 {
+      color: #10b981;
+      margin-bottom: 5px;
+    }
+
+    .result-details p {
+      color: #6b7280;
+    }
+
+    .result-images {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .result-image {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .result-image img {
+      max-width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+
+    .result-image .download-btn {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    .result-image .download-btn:hover {
+      background: #4338ca;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+      .convert-mode {
+        flex-direction: column;
+      }
+
+      .option-group {
+        flex-direction: column;
+      }
+
+      .preview-grid,
+      .result-images {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo">PDF工具矩阵</a>
+      <ul class="nav-links">
+        <li><a href="/merge">PDF合并</a></li>
+        <li><a href="/compress">PDF压缩</a></li>
+        <li><a href="/convert">PDF转换</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- 工具页面 -->
+  <main class="tool-page">
+    <div class="container">
+      <div class="tool-header">
+        <h1>🔄 PDF转换</h1>
+        <p>支持PDF转图片、图片转PDF两种转换模式</p>
+      </div>
+
+      <!-- 转换模式选择 -->
+      <div class="convert-mode">
+        <button class="mode-btn active" data-mode="pdf-to-image" disabled style="opacity:0.5;cursor:not-allowed;">📄 PDF转图片（即将上线）</button>
+        <button class="mode-btn" data-mode="image-to-pdf">🖼️ 图片转PDF</button>
+      </div>
+
+      <!-- 上传区域 -->
+      <div class="upload-area" id="dropZone">
+        <div class="upload-icon">📁</div>
+        <div class="upload-text" id="uploadText">拖拽PDF文件到这里，或点击选择文件</div>
+        <div class="upload-hint" id="uploadHint">支持单个PDF文件，最大100MB</div>
+        <input type="file" id="fileInput" class="file-input" accept=".pdf,.jpg,.jpeg,.png">
+      </div>
+
+      <!-- 文件列表 -->
+      <div class="file-list" id="fileList"></div>
+
+      <!-- 文件预览 -->
+      <div class="file-preview" id="filePreview" style="display: none;">
+        <div class="preview-header">
+          <div class="preview-icon" id="previewIcon">📄</div>
+          <div class="preview-details">
+            <h3 id="previewTitle">已选择文件</h3>
+            <p id="previewSubtitle">准备转换</p>
+          </div>
+        </div>
+        <div class="preview-grid" id="previewGrid"></div>
+      </div>
+
+      <!-- 转换选项 -->
+      <div class="convert-options" id="convertOptions" style="display: none;">
+        <div id="pdfToImageOptions">
+          <h3>PDF转图片选项</h3>
+          <div class="option-group">
+            <label>
+              <input type="radio" name="format" value="jpg" checked>
+              JPG格式
+            </label>
+            <label>
+              <input type="radio" name="format" value="png">
+              PNG格式
+            </label>
+          </div>
+          <div class="option-group">
+            <label>
+              <input type="radio" name="quality" value="low" checked>
+              低质量（72 DPI）
+            </label>
+            <label>
+              <input type="radio" name="quality" value="medium">
+              中等质量（150 DPI）
+            </label>
+            <label>
+              <input type="radio" name="quality" value="high">
+              高质量（300 DPI）
+            </label>
+          </div>
+        </div>
+
+        <div id="imageToPdfOptions" style="display: none;">
+          <h3>图片转PDF选项</h3>
+          <div class="option-group">
+            <label>
+              <input type="checkbox" name="fitPage" checked>
+              适应页面大小
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 进度条 -->
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">准备转换...</div>
+      </div>
+
+      <!-- 结果容器 -->
+      <div class="result-container" id="resultContainer">
+        <div class="result-header">
+          <div class="result-icon">✅</div>
+          <div class="result-details">
+            <h3 id="resultTitle">转换完成！</h3>
+            <p id="resultSubtitle">文件已准备就绪</p>
+          </div>
+        </div>
+        <div class="result-images" id="resultImages"></div>
+      </div>
+
+      <!-- 转换按钮 -->
+      <button class="process-btn" id="convertBtn" disabled>
+        🔄 开始转换
+      </button>
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2024 PDF工具矩阵 - 免费在线PDF处理工具</p>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    let currentMode = 'pdf-to-image';
+
+    // 初始化文件上传器
+    const uploader = new FileUploader({
+      dropZone: document.getElementById('dropZone'),
+      fileInput: document.getElementById('fileInput'),
+      fileList: document.getElementById('fileList'),
+      maxFiles: 20,
+      allowedTypes: ['application/pdf', 'image/jpeg', 'image/png']
+    });
+
+    const convertBtn = document.getElementById('convertBtn');
+    const convertOptions = document.getElementById('convertOptions');
+    const pdfToImageOptions = document.getElementById('pdfToImageOptions');
+    const imageToPdfOptions = document.getElementById('imageToPdfOptions');
+    const uploadText = document.getElementById('uploadText');
+    const uploadHint = document.getElementById('uploadHint');
+    const filePreview = document.getElementById('filePreview');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const resultContainer = document.getElementById('resultContainer');
+    const resultImages = document.getElementById('resultImages');
+
+    // 模式切换
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        updateMode();
+      });
+    });
+
+    function updateMode() {
+      uploader.clear();
+
+      if (currentMode === 'pdf-to-image') {
+        uploadText.textContent = '拖拽PDF文件到这里，或点击选择文件';
+        uploadHint.textContent = '支持单个PDF文件，最大100MB';
+        uploader.allowedTypes = ['application/pdf'];
+        uploader.maxFiles = 1;
+        pdfToImageOptions.style.display = 'block';
+        imageToPdfOptions.style.display = 'none';
+      } else {
+        uploadText.textContent = '拖拽图片文件到这里，或点击选择文件';
+        uploadHint.textContent = '支持JPG、PNG格式，最多20张，每张最大10MB';
+        uploader.allowedTypes = ['image/jpeg', 'image/png'];
+        uploader.maxFiles = 20;
+        pdfToImageOptions.style.display = 'none';
+        imageToPdfOptions.style.display = 'block';
+      }
+
+      updateUI();
+    }
+
+    // 监听文件变化
+    const originalAddFiles = uploader.addFiles.bind(uploader);
+    uploader.addFiles = function(files) {
+      originalAddFiles(files);
+      updateUI();
+    };
+
+    const originalRemoveFile = uploader.removeFile.bind(uploader);
+    uploader.removeFile = function(index) {
+      originalRemoveFile(index);
+      updateUI();
+    };
+
+    function updateUI() {
+      const files = uploader.getFiles();
+      const hasFiles = files.length > 0;
+
+      convertBtn.disabled = !hasFiles;
+      convertOptions.style.display = hasFiles ? 'block' : 'none';
+      filePreview.style.display = hasFiles ? 'block' : 'none';
+      resultContainer.style.display = 'none';
+
+      if (hasFiles) {
+        updateFilePreview(files);
+      }
+    }
+
+    function updateFilePreview(files) {
+      const previewGrid = document.getElementById('previewGrid');
+      const previewIcon = document.getElementById('previewIcon');
+      const previewTitle = document.getElementById('previewTitle');
+      const previewSubtitle = document.getElementById('previewSubtitle');
+
+      if (currentMode === 'pdf-to-image') {
+        previewIcon.textContent = '📄';
+        previewTitle.textContent = files[0].name;
+        previewSubtitle.textContent = `${utils.formatFileSize(files[0].size)} - 准备转换为图片`;
+
+        previewGrid.innerHTML = `
+          <div class="preview-item">
+            <div class="preview-thumb">📄</div>
+            <div class="preview-name">${utils.escapeHtml(files[0].name)}</div>
+          </div>
+        `;
+      } else {
+        previewIcon.textContent = '🖼️';
+        previewTitle.textContent = `已选择 ${files.length} 张图片`;
+        previewSubtitle.textContent = '准备转换为PDF';
+
+        previewGrid.innerHTML = files.map((file, index) => `
+          <div class="preview-item">
+            <div class="preview-thumb">🖼️</div>
+            <div class="preview-name">${utils.escapeHtml(file.name)}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // 转换按钮点击事件
+    convertBtn.addEventListener('click', async () => {
+      const files = uploader.getFiles();
+      if (files.length === 0) {
+        utils.showMessage('请选择文件', 'error');
+        return;
+      }
+
+      // 显示进度条
+      progressContainer.style.display = 'block';
+      convertBtn.disabled = true;
+      utils.showLoading(convertBtn);
+
+      try {
+        // 模拟进度
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+          progress += Math.random() * 15;
+          if (progress > 90) {
+            clearInterval(progressInterval);
+            progress = 90;
+          }
+          progressFill.style.width = `${progress}%`;
+          progressText.textContent = `转换中... ${Math.round(progress)}%`;
+        }, 200);
+
+        const formData = new FormData();
+
+        if (currentMode === 'pdf-to-image') {
+          formData.append('file', files[0]);
+          const format = document.querySelector('input[name="format"]:checked').value;
+          const quality = document.querySelector('input[name="quality"]:checked').value;
+          formData.append('format', format);
+          formData.append('quality', quality);
+
+          const response = await fetch('/api/pdf/to-images', {
+            method: 'POST',
+            body: formData
+          });
+
+          clearInterval(progressInterval);
+
+          if (!response.ok) {
+            throw new Error('转换失败');
+          }
+
+          const result = await response.json();
+
+          // 完成进度
+          progressFill.style.width = '100%';
+          progressText.textContent = '转换完成！';
+
+          // 显示结果
+          document.getElementById('resultTitle').textContent = 'PDF转图片成功！';
+          document.getElementById('resultSubtitle').textContent = `共转换 ${result.images.length} 张图片`;
+
+          resultImages.innerHTML = result.images.map((image, index) => `
+            <div class="result-image">
+              <div class="preview-thumb" style="width: 100%; height: 120px;">🖼️</div>
+              <p>第 ${index + 1} 页</p>
+              <button class="download-btn download-image-btn" data-image="${utils.escapeHtml(image)}">下载</button>
+            </div>
+          `).join('');
+
+          resultContainer.style.display = 'block';
+
+        } else {
+          files.forEach(file => {
+            formData.append('files', file);
+          });
+
+          const fitPage = document.querySelector('input[name="fitPage"]').checked;
+          formData.append('fitPage', fitPage);
+
+          const response = await fetch('/api/pdf/from-images', {
+            method: 'POST',
+            body: formData
+          });
+
+          clearInterval(progressInterval);
+
+          if (!response.ok) {
+            throw new Error('转换失败');
+          }
+
+          // 完成进度
+          progressFill.style.width = '100%';
+          progressText.textContent = '转换完成！';
+
+          // 下载文件
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'converted.pdf';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+
+          // 显示结果
+          document.getElementById('resultTitle').textContent = '图片转PDF成功！';
+          document.getElementById('resultSubtitle').textContent = `已将 ${files.length} 张图片合并为PDF`;
+          resultImages.innerHTML = `
+            <div class="result-image">
+              <div class="preview-thumb" style="width: 100%; height: 120px;">📄</div>
+              <p>converted.pdf</p>
+              <button class="download-btn download-pdf-btn">下载PDF</button>
+            </div>
+          `;
+          resultContainer.style.display = 'block';
+        }
+
+        utils.showMessage('转换成功！', 'success');
+
+        // 清理
+        setTimeout(() => {
+          progressContainer.style.display = 'none';
+          progressFill.style.width = '0%';
+        }, 2000);
+
+      } catch (error) {
+        utils.showMessage('转换失败: ' + error.message, 'error');
+        progressContainer.style.display = 'none';
+      } finally {
+        utils.hideLoading(convertBtn);
+      }
+    });
+
+    // 下载图片
+    window.downloadImage = function(imagePath) {
+      const a = document.createElement('a');
+      a.href = `/temp/${imagePath}`;
+      a.download = imagePath;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+
+    // 事件委托：下载按钮
+    resultImages.addEventListener('click', (e) => {
+      const imgBtn = e.target.closest('.download-image-btn');
+      if (imgBtn) { downloadImage(imgBtn.dataset.image); return; }
+      const pdfBtn = e.target.closest('.download-pdf-btn');
+      if (pdfBtn) { utils.showMessage('PDF文件已自动下载', 'info'); return; }
+    });
+
+    // 初始化模式
+    updateMode();
+  </script>
+</body>
+</html>

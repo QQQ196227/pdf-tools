@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF旋转 - 免费在线PDF工具</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo">PDF工具矩阵</a>
+      <ul class="nav-links">
+        <li><a href="/merge">PDF合并</a></li>
+        <li><a href="/compress">PDF压缩</a></li>
+        <li><a href="/convert">PDF转换</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="tool-page">
+    <div class="container">
+      <div class="tool-header">
+        <h1>🔄 旋转PDF</h1>
+        <p>旋转PDF页面方向，支持90°、180°、270°旋转</p>
+      </div>
+
+      <div class="upload-area" id="dropZone">
+        <div class="upload-icon">📁</div>
+        <div class="upload-text">拖拽PDF文件到这里，或点击选择文件</div>
+        <div class="upload-hint">支持单个PDF文件，最大100MB</div>
+        <input type="file" id="fileInput" class="file-input" accept=".pdf">
+      </div>
+
+      <div class="file-list" id="fileList"></div>
+
+      <div class="file-count" id="fileCount"></div>
+
+      <div id="rotateOptions" style="display: none; background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+        <h3>旋转角度</h3>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button class="rotate-option active" data-degree="90" style="flex:1; padding: 15px; border: 2px solid #4f46e5; background: #4f46e5; color: white; border-radius: 8px; cursor: pointer; font-size: 1.2rem;">↻ 90°</button>
+          <button class="rotate-option" data-degree="180" style="flex:1; padding: 15px; border: 2px solid #e5e7eb; background: white; border-radius: 8px; cursor: pointer; font-size: 1.2rem;">↻ 180°</button>
+          <button class="rotate-option" data-degree="270" style="flex:1; padding: 15px; border: 2px solid #e5e7eb; background: white; border-radius: 8px; cursor: pointer; font-size: 1.2rem;">↻ 270°</button>
+        </div>
+      </div>
+
+      <div class="progress-container" id="progressContainer" style="display: none;">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%; height: 20px; background: linear-gradient(90deg, #4f46e5, #7c3aed); border-radius: 10px; transition: width 0.3s ease;"></div>
+        </div>
+        <div class="progress-text" id="progressText">旋转中...</div>
+      </div>
+
+      <button class="process-btn" id="rotateBtn" disabled>🔄 旋转PDF</button>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container"><p>&copy; 2024 PDF工具矩阵</p></div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    let selectedDegree = 90;
+
+    const uploader = new FileUploader({
+      dropZone: document.getElementById('dropZone'),
+      fileInput: document.getElementById('fileInput'),
+      fileList: document.getElementById('fileList'),
+      maxFiles: 1,
+      allowedTypes: ['application/pdf']
+    });
+
+    const rotateBtn = document.getElementById('rotateBtn');
+    const rotateOptions = document.getElementById('rotateOptions');
+
+    // 旋转角度选择
+    document.querySelectorAll('.rotate-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.rotate-option').forEach(b => {
+          b.style.background = 'white';
+          b.style.color = '#1e293b';
+          b.style.borderColor = '#e5e7eb';
+        });
+        btn.style.background = '#4f46e5';
+        btn.style.color = 'white';
+        btn.style.borderColor = '#4f46e5';
+        selectedDegree = parseInt(btn.dataset.degree);
+      });
+    });
+
+    const origAdd = uploader.addFiles.bind(uploader);
+    uploader.addFiles = function(files) { origAdd(files); updateUI(); };
+    const origRemove = uploader.removeFile.bind(uploader);
+    uploader.removeFile = function(index) { origRemove(index); updateUI(); };
+
+    function updateUI() {
+      const has = uploader.getFiles().length > 0;
+      rotateBtn.disabled = !has;
+      rotateOptions.style.display = has ? 'block' : 'none';
+    }
+
+    rotateBtn.addEventListener('click', async () => {
+      const files = uploader.getFiles();
+      if (!files.length) return;
+
+      utils.showLoading(rotateBtn);
+
+      const fd = new FormData();
+      fd.append('file', files[0]);
+      fd.append('degrees', selectedDegree);
+
+      try {
+        const r = await fetch('/api/pdf/rotate', { method: 'POST', body: fd });
+        if (!r.ok) throw new Error('旋转失败');
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'rotated.pdf';
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        utils.showMessage('PDF旋转成功！', 'success');
+      } catch(e) {
+        utils.showMessage('旋转失败: ' + e.message, 'error');
+      } finally {
+        utils.hideLoading(rotateBtn);
+      }
+    });
+
+    updateUI();
+  </script>
+</body>
+</html>
