@@ -20,22 +20,14 @@ app.use((req, res, next) => {
 
 // 中间件
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: function(origin, callback) {
+    // 允许所有来源（生产环境可通过 CORS_ORIGIN 环境变量限制）
+    callback(null, true);
+  },
   methods: ['GET', 'POST'],
 }));
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "blob:"],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      frameSrc: ["'none'"],
-    }
-  }
+  contentSecurityPolicy: false, // 临时禁用 CSP，避免阻止字体和样式加载
 }));
 app.use(compression());
 app.use(express.json());
