@@ -425,20 +425,10 @@
       progressContainer.style.display = 'block';
       mergeBtn.disabled = true;
       utils.showLoading(mergeBtn);
+      progressFill.style.width = '50%';
+      progressText.textContent = '正在合并，请稍候...';
 
       try {
-        // 模拟进度
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-          progress += Math.random() * 20;
-          if (progress > 90) {
-            clearInterval(progressInterval);
-            progress = 90;
-          }
-          progressFill.style.width = `${progress}%`;
-          progressText.textContent = `合并中... ${Math.round(progress)}%`;
-        }, 200);
-
         const formData = new FormData();
         files.forEach(file => {
           formData.append('files', file);
@@ -453,8 +443,6 @@
           method: 'POST',
           body: formData
         });
-
-        clearInterval(progressInterval);
 
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
@@ -486,12 +474,13 @@
           updateUI();
           progressContainer.style.display = 'none';
           progressFill.style.width = '0%';
-        }, 2000);
+        }, 3000);
 
       } catch (error) {
         utils.showMessage('合并失败: ' + error.message, 'error');
         progressContainer.style.display = 'none';
       } finally {
+        mergeBtn.disabled = false;
         utils.hideLoading(mergeBtn);
       }
     });
