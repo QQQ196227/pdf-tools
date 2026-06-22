@@ -7,88 +7,62 @@ const path = require('path');
 const SOFFICE_PATH = process.env.LIBREOFFICE_PATH || (process.platform === 'win32'
   ? 'C:\\Program Files\\LibreOffice\\program\\soffice.exe'
   : '/usr/bin/libreoffice');
+
+// qpdf 路径
+const QPDF_PATH = process.env.QPDF_PATH || (process.platform === 'win32'
+  ? 'C:\\Program Files\\qpdf\\bin\\qpdf.exe'
+  : 'qpdf');
+
+// Ghostscript 路径（用于 PDF 压缩）
+const GS_PATH = process.env.GS_PATH || (process.platform === 'win32'
+  ? 'C:\\Program Files\\gs\\gs10.02.1\\bin\\gswin64c.exe'
+  : '/usr/bin/gs');
+
 // Python 脚本目录
 const SCRIPTS_DIR = path.join(__dirname, '../../scripts');
 
 /**
- * 用 LibreOffice 转换文件格式（Office → PDF）
- * @param {string} inputPath - 输入文件路径
- * @param {string} outputPath - 输出PDF路径
+ * 执行命令行工具
  */
-function libreOfficeToPDF(inputPath, outputPath) {
+function execCommand(command, args, options = {}) {
   return new Promise((resolve, reject) => {
-    const outDir = path.dirname(outputPath);
-
-    execFile(SOFFICE_PATH, [
-      '--headless',
-      '--convert-to', 'pdf',
-      '--outdir', outDir,
-      inputPath
-    ], { timeout: 60000 }, (err, stdout, stderr) => {
-      if (err) {
-        return reject(new Error(`LibreOffice 转换失败: ${err.message}`));
-      }
-      // LibreOffice 输出文件名 = 输入文件名改扩展名为 .pdf
-      const baseName = path.basename(inputPath, path.extname(inputPath));
-      const generatedPath = path.join(outDir, baseName + '.pdf');
-
-      if (!fs.existsSync(generatedPath)) {
-        return reject(new Error('LibreOffice 转换后未生成文件'));
-      }
-
-      if (generatedPath !== outputPath) {
-        fs.renameSync(generatedPath, outputPath);
-      }
-      resolve(outputPath);
-    });
-  });
-}
-
-/**
- * 用 Python 脚本转换 PDF → Office
- * @param {string} inputPath - 输入PDF路径
- * @param {string} outputPath - 输出文件路径
- * @param {string} format - 目标格式（'docx', 'xlsx', 'pptx'）
- */
-function pdfToOfficeWithPython(inputPath, outputPath, format) {
-  return new Promise((resolve, reject) => {
-    const scriptPath = path.join(SCRIPTS_DIR, `pdf_to_${format}.py`);
-
-    execFile('python', [scriptPath, inputPath, outputPath], { timeout: 60000 }, (err, stdout, stderr) => {
-      if (err) {
-        return reject(new Error(`PDF转${format}失败: ${stderr || err.message}`));
-      }
-      if (stdout.trim() !== 'OK') {
-        return reject(new Error(`PDF转${format}失败: ${stdout}`));
-      }
-      if (!fs.existsSync(outputPath)) {
-        return reject(new Error(`PDF转${format}后未生成文件`));
-      }
-      resolve(outputPath);
+    execFile(command, args, { timeout: 120000, ...options }, (err, stdout, stderr) => {
+      if (err) reject(new Error(stderr || err.message));
+      else resolve(stdout);
     });
   });
 }
 
 class PDFService {
   /**
-   * 合并多个PDF文件
+   * 合并多个PDF文件（使用 qpdf）
    * @param {string[]} filePaths - PDF文件路径数组
    * @param {string} outputPath - 输出文件路径
    * @param {object} options - 合并选项
-   * @param {boolean} options.addPageNumbers - 是否添加页码
-   * @param {boolean} options.addBookmarks - 是否添加书签
-   * @param {boolean} options.compressOutput - 是否压缩输出
    */
   async mergePDFs(filePaths, outputPath, options = {}) {
     try {
-      // 使用 qpdf 合并（更健壮，支持各种PDF格式）
+      // 验证所有文件都是 PDF
+      for (const filePath of filePaths) {
+        const buffer = fs.readFileSync(filePath);
+        const header = buffer.toString('ascii', 0, 5);
+        if (!header.startsWith('%PDF')) {
+          throw new Error(`文件不是有效的PDF格式: ${path.basename(filePath)}`);
+        }
+      }
+
+      // 使用 qpdf 合并
       const args = ['--empty', '--pages', ...filePaths, '--', outputPath];
-      await new Promise((resolve, reject) => {
-        execFile('qpdf', args, { timeout: 60000 }, (err, stdout, stderr) => {
-          if (err) reject(new Error(`qpdf 失败: ${stderr || err.message}`));
-          else resolve();
-        });
-      });
+      await execCommand(QPDF_PATH, args);
+
+      // 如果需要压缩，用 qpdf 的 --linearize 选项
+      if (options.compressOutput) {
+        const tempPath = outputPath + '.tmp';
+        fs.renameSync(outputPath, tempPath);
+        await execCommand(QPDF_PATH, ['--linearize', tempPath, outputPath]);
+        fs.unlinkSync(tempPath);
+      }
+
       return outputPath;
     } catch (error) {
       throw new Error(`PDF合并失败: ${error.message}`);
@@ -96,84 +70,73 @@ class PDFService {
   }
 
   /**
-   * 压缩PDF文件
+   * 压缩PDF文件（使用 Ghostscript）
    * @param {string} inputPath - 输入文件路径
    * @param {string} outputPath - 输出文件路径
    * @param {string} quality - 压缩质量 ('low', 'medium', 'high')
    */
   async compressPDF(inputPath, outputPath, quality = 'medium') {
     try {
-      const pdfBytes = fs.readFileSync(inputPath);
-      const pdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      // 质量设置映射
+      const qualitySettings = {
+        'low': '/screen',      // 72 dpi - 最小文件
+        'medium': '/ebook',    // 150 dpi - 平衡
+        'high': '/printer',    // 300 dpi - 高质量
+      };
 
-      // 根据质量级别选择压缩选项
-      let saveOptions = {};
+      const setting = qualitySettings[quality] || qualitySettings['medium'];
 
-      switch (quality) {
-        case 'low':
-          // 最大压缩
-          saveOptions = {
-            useObjectStreams: true,
-            addDefaultPage: false,
-            objectsPerTick: 50,
-          };
-          break;
-        case 'medium':
-          // 中等压缩
-          saveOptions = {
-            useObjectStreams: true,
-            addDefaultPage: false,
-          };
-          break;
-        case 'high':
-          // 最小压缩（保持质量）
-          saveOptions = {
-            useObjectStreams: false,
-            addDefaultPage: false,
-          };
-          break;
-        default:
-          saveOptions = {
-            useObjectStreams: true,
-            addDefaultPage: false,
-          };
+      // 使用 Ghostscript 压缩
+      const args = [
+        '-sDEVICE=pdfwrite',
+        '-dCompatibilityLevel=1.4',
+        `-dPDFSETTINGS=${setting}`,
+        '-dNOPAUSE',
+        '-dQUIET',
+        '-dBATCH',
+        `-sOutputFile=${outputPath}`,
+        inputPath
+      ];
+
+      await execCommand(GS_PATH, args);
+
+      // 如果 Ghostscript 失败或不可用，回退到 qpdf
+      if (!fs.existsSync(outputPath)) {
+        await execCommand(QPDF_PATH, ['--linearize', inputPath, outputPath]);
       }
-
-      const compressedPdfBytes = await pdf.save(saveOptions);
-      fs.writeFileSync(outputPath, compressedPdfBytes);
 
       return outputPath;
     } catch (error) {
-      throw new Error(`PDF压缩失败: ${error.message}`);
+      // 如果 Ghostscript 不可用，尝试 qpdf 压缩
+      try {
+        await execCommand(QPDF_PATH, ['--linearize', inputPath, outputPath]);
+        return outputPath;
+      } catch (qpdfError) {
+        throw new Error(`PDF压缩失败: ${error.message}`);
+      }
     }
   }
 
   /**
-   * PDF转图片
-   * @param {string} inputPath - 输入文件路径
+   * PDF转图片（使用 pdftoppm）
+   * @param {string} inputPath - 输入PDF路径
    * @param {string} outputDir - 输出目录
    * @returns {string[]} - 图片路径数组
    */
   async pdfToImages(inputPath, outputDir) {
     try {
-      // 这里需要使用其他库如pdf-poppler或pdf2pic
-      // 为了简化，这里只是示例实现
-      const pdfBytes = fs.readFileSync(inputPath);
-      const pdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-      const pageCount = pdf.getPageCount();
+      const prefix = path.join(outputDir, 'page');
 
-      const imagePaths = [];
+      // 使用 pdftoppm 转换（poppler-utils）
+      await execCommand('pdftoppm', ['-jpeg', '-r', '150', inputPath, prefix]);
 
-      // 注意：pdf-lib不支持直接转图片
-      // 实际项目中需要使用pdf2pic或其他库
-      // 这里只是返回占位信息
-      for (let i = 0; i < pageCount; i++) {
-        const imagePath = path.join(outputDir, `page_${i + 1}.jpg`);
-        // 实际实现需要调用pdf2pic等库
-        imagePaths.push(imagePath);
-      }
+      // 获取生成的图片文件
+      const files = fs.readdirSync(outputDir)
+        .filter(f => f.startsWith('page') && f.endsWith('.jpg'))
+        .sort()
+        .map(f => path.join(outputDir, f));
 
-      return imagePaths;
+      return files;
     } catch (error) {
       throw new Error(`PDF转图片失败: ${error.message}`);
     }
@@ -201,13 +164,20 @@ class PDFService {
           throw new Error(`不支持的图片格式: ${ext}`);
         }
 
-        const page = pdfDoc.addPage([image.width, image.height]);
-        page.drawImage(image, {
-          x: 0,
-          y: 0,
-          width: image.width,
-          height: image.height,
-        });
+        // 按比例缩放到 A4 尺寸（595 x 842 点）
+        const maxWidth = 595;
+        const maxHeight = 842;
+        let width = image.width;
+        let height = image.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width *= ratio;
+          height *= ratio;
+        }
+
+        const page = pdfDoc.addPage([width, height]);
+        page.drawImage(image, { x: 0, y: 0, width, height });
       }
 
       const pdfBytes = await pdfDoc.save();
@@ -221,8 +191,6 @@ class PDFService {
 
   /**
    * 获取PDF信息
-   * @param {string} inputPath - 输入文件路径
-   * @returns {object} - PDF信息
    */
   async getPDFInfo(inputPath) {
     try {
@@ -246,9 +214,6 @@ class PDFService {
 
   /**
    * 提取PDF页面
-   * @param {string} inputPath - 输入文件路径
-   * @param {number[]} pages - 页码数组（从1开始）
-   * @param {string} outputPath - 输出文件路径
    */
   async extractPages(inputPath, pages, outputPath) {
     try {
@@ -270,9 +235,6 @@ class PDFService {
 
   /**
    * 旋转PDF页面
-   * @param {string} inputPath - 输入文件路径
-   * @param {number} degrees - 旋转角度（90, 180, 270）
-   * @param {string} outputPath - 输出文件路径
    */
   async rotatePDF(inputPath, degrees, outputPath) {
     try {
@@ -295,12 +257,28 @@ class PDFService {
 
   /**
    * Office文件转PDF（Word/Excel/PPT → PDF）
-   * @param {string} inputPath - 输入文件路径
-   * @param {string} outputPath - 输出PDF路径
    */
   async officeToPDF(inputPath, outputPath) {
     try {
-      await libreOfficeToPDF(inputPath, outputPath);
+      const outDir = path.dirname(outputPath);
+      await execCommand(SOFFICE_PATH, [
+        '--headless',
+        '--convert-to', 'pdf',
+        '--outdir', outDir,
+        inputPath
+      ]);
+
+      const baseName = path.basename(inputPath, path.extname(inputPath));
+      const generatedPath = path.join(outDir, baseName + '.pdf');
+
+      if (!fs.existsSync(generatedPath)) {
+        throw new Error('LibreOffice 转换后未生成文件');
+      }
+
+      if (generatedPath !== outputPath) {
+        fs.renameSync(generatedPath, outputPath);
+      }
+
       return outputPath;
     } catch (error) {
       throw new Error(`Office转PDF失败: ${error.message}`);
@@ -309,19 +287,22 @@ class PDFService {
 
   /**
    * PDF转Office文件（PDF → Word/Excel/PPT）
-   * @param {string} inputPath - 输入PDF路径
-   * @param {string} outputPath - 输出文件路径
-   * @param {string} targetFormat - 目标格式（'docx', 'xlsx', 'pptx'）
-   * @param {string} mode - 转换模式（'editable' 或 'layout'，仅 docx 有效）
    */
   async pdfToOffice(inputPath, outputPath, targetFormat, mode = 'editable') {
     try {
-      // Word 支持两种模式
-      if (targetFormat === 'docx' && mode === 'layout') {
-        await pdfToOfficeWithPython(inputPath, outputPath, 'docx_layout');
-      } else {
-        await pdfToOfficeWithPython(inputPath, outputPath, targetFormat);
+      const scriptPath = path.join(SCRIPTS_DIR, `pdf_to_${targetFormat}.py`);
+
+      // 检查 Python 脚本是否存在
+      if (!fs.existsSync(scriptPath)) {
+        throw new Error(`转换脚本不存在: ${scriptPath}`);
       }
+
+      await execCommand('python3', [scriptPath, inputPath, outputPath]);
+
+      if (!fs.existsSync(outputPath)) {
+        throw new Error(`PDF转${targetFormat}后未生成文件`);
+      }
+
       return outputPath;
     } catch (error) {
       throw new Error(`PDF转Office失败: ${error.message}`);
