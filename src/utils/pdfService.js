@@ -3,8 +3,10 @@ const { execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-// LibreOffice 路径（Windows）
-const SOFFICE_PATH = process.env.LIBREOFFICE_PATH || 'C:\\Program Files\\LibreOffice\\program\\soffice.exe';
+// LibreOffice 路径（自动适配 Linux/Windows）
+const SOFFICE_PATH = process.env.LIBREOFFICE_PATH || (process.platform === 'win32'
+  ? 'C:\\Program Files\\LibreOffice\\program\\soffice.exe'
+  : '/usr/bin/libreoffice');
 // Python 脚本目录
 const SCRIPTS_DIR = path.join(__dirname, '../../scripts');
 
@@ -85,7 +87,7 @@ class PDFService {
       // 第一遍：合并所有页面
       for (const filePath of filePaths) {
         const pdfBytes = fs.readFileSync(filePath);
-        const pdf = await PDFDocument.load(pdfBytes);
+        const pdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
         const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
         copiedPages.forEach((page) => {
           mergedPdf.addPage(page);
@@ -198,7 +200,7 @@ class PDFService {
       // 这里需要使用其他库如pdf-poppler或pdf2pic
       // 为了简化，这里只是示例实现
       const pdfBytes = fs.readFileSync(inputPath);
-      const pdf = await PDFDocument.load(pdfBytes);
+      const pdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
       const pageCount = pdf.getPageCount();
 
       const imagePaths = [];
@@ -292,7 +294,7 @@ class PDFService {
   async extractPages(inputPath, pages, outputPath) {
     try {
       const pdfBytes = fs.readFileSync(inputPath);
-      const pdf = await PDFDocument.load(pdfBytes);
+      const pdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
       const newPdf = await PDFDocument.create();
 
       const copiedPages = await newPdf.copyPages(pdf, pages.map(p => p - 1));
@@ -316,7 +318,7 @@ class PDFService {
   async rotatePDF(inputPath, degrees, outputPath) {
     try {
       const pdfBytes = fs.readFileSync(inputPath);
-      const pdf = await PDFDocument.load(pdfBytes);
+      const pdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
       const pages = pdf.getPages();
       pages.forEach(page => {
