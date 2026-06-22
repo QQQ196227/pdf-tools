@@ -81,25 +81,15 @@ class PDFService {
    */
   async mergePDFs(filePaths, outputPath, options = {}) {
     try {
-      const mergedPdf = await PDFDocument.create();
-      let totalPages = 0;
-
-      // 第一遍：合并所有页面
-      for (const filePath of filePaths) {
-        const pdfBytes = fs.readFileSync(filePath);
-        const pdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-
-        // 逐页复制，跳过有问题的页面
-        for (let i = 0; i < pdf.getPageCount(); i++) {
-          try {
-            const [copiedPage] = await mergedPdf.copyPages(pdf, [i]);
-            mergedPdf.addPage(copiedPage);
-            totalPages++;
-          } catch (pageError) {
-            console.warn(`跳过第 ${i + 1} 页: ${pageError.message}`);
-          }
-        }
-      }
+      // 使用 qpdf 合并（更健壮，支持各种PDF格式）
+      const args = ['--empty', '--pages', ...filePaths, '--', outputPath];
+      await new Promise((resolve, reject) => {
+        execFile('qpdf', args, { timeout: 60000 }, (err, stdout, stderr) => {
+          if (err) reject(new Error(`qpdf 失败: ${stderr || err.message}`));
+          else resolve();
+        });
+      });
+      return outputPath;
 
       // 第二遍：添加页码（如果需要）
       if (options.addPageNumbers) {
