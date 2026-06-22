@@ -457,12 +457,13 @@
         clearInterval(progressInterval);
 
         if (!response.ok) {
-          throw new Error('合并失败');
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || '合并失败');
         }
 
         // 完成进度
         progressFill.style.width = '100%';
-        progressText.textContent = '合并完成！';
+        progressText.textContent = '合并完成！正在下载...';
 
         // 下载文件
         const blob = await response.blob();

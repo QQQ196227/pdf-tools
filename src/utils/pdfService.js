@@ -88,11 +88,17 @@ class PDFService {
       for (const filePath of filePaths) {
         const pdfBytes = fs.readFileSync(filePath);
         const pdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-        copiedPages.forEach((page) => {
-          mergedPdf.addPage(page);
-          totalPages++;
-        });
+
+        // 逐页复制，跳过有问题的页面
+        for (let i = 0; i < pdf.getPageCount(); i++) {
+          try {
+            const [copiedPage] = await mergedPdf.copyPages(pdf, [i]);
+            mergedPdf.addPage(copiedPage);
+            totalPages++;
+          } catch (pageError) {
+            console.warn(`跳过第 ${i + 1} 页: ${pageError.message}`);
+          }
+        }
       }
 
       // 第二遍：添加页码（如果需要）
