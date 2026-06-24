@@ -141,12 +141,19 @@ router.post('/to-images', uploadPdf.single('file'), async (req, res) => {
       return res.status(400).json({ error: '请上传PDF文件' });
     }
 
+    // 读取格式和质量选项
+    const format = req.body.format || 'jpeg';
+    const quality = req.body.quality || 'medium';
+    const dpiMap = { 'low': 72, 'medium': 150, 'high': 300 };
+    const dpi = dpiMap[quality] || 150;
+
     fs.mkdirSync(outputDir, { recursive: true });
-    const imagePaths = await pdfService.pdfToImages(req.file.path, outputDir);
+    const imagePaths = await pdfService.pdfToImages(req.file.path, outputDir, { format, dpi });
 
     // 返回图片列表
+    const ext = format === 'png' ? '.png' : '.jpg';
     const images = imagePaths.map((p, i) => ({
-      name: `page_${i + 1}.jpg`,
+      name: `page_${i + 1}${ext}`,
       url: `/temp/${path.basename(outputDir)}/${path.basename(p)}`
     }));
 
