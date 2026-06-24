@@ -238,17 +238,10 @@ class PDFService {
    */
   async rotatePDF(inputPath, degrees, outputPath) {
     try {
-      const pdfBytes = fs.readFileSync(inputPath);
-      const pdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-
-      const pages = pdf.getPages();
-      pages.forEach(page => {
-        page.setRotation({ type: 'degrees', angle: degrees });
-      });
-
-      const rotatedPdfBytes = await pdf.save();
-      fs.writeFileSync(outputPath, rotatedPdfBytes);
-
+      // 使用 qpdf 旋转（更健壮）
+      const rotation = `+${degrees}`;
+      const args = [inputPath, `--rotate=${rotation}:1-z`, outputPath];
+      await execCommand(QPDF_PATH, args);
       return outputPath;
     } catch (error) {
       throw new Error(`旋转PDF失败: ${error.message}`);

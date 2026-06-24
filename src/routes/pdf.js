@@ -144,24 +144,14 @@ router.post('/to-images', uploadPdf.single('file'), async (req, res) => {
     fs.mkdirSync(outputDir, { recursive: true });
     const imagePaths = await pdfService.pdfToImages(req.file.path, outputDir);
 
-    // 打包成 zip 下载
-    const archiver = require('archiver');
-    const zipPath = path.join(outputDir, 'images.zip');
-    const output = fs.createWriteStream(zipPath);
-    const archive = archiver('zip');
+    // 返回图片列表
+    const images = imagePaths.map((p, i) => ({
+      name: `page_${i + 1}.jpg`,
+      url: `/temp/${path.basename(outputDir)}/${path.basename(p)}`
+    }));
 
-    archive.pipe(output);
-    imagePaths.forEach((imgPath, i) => {
-      archive.file(imgPath, { name: `page_${i + 1}.jpg` });
-    });
-    await archive.finalize();
-
-    output.on('close', () => {
-      res.download(zipPath, 'pdf_images.zip', (err) => {
-        cleanupFiles(req.file.path);
-        fs.rm(outputDir, { recursive: true }, () => {});
-      });
-    });
+    cleanupFiles(req.file.path);
+    res.json({ success: true, images, count: images.length });
   } catch (error) {
     console.error('PDF转图片错误:', error);
     cleanupFiles(req.file ? req.file.path : null);
