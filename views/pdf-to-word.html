@@ -130,7 +130,7 @@
       try {
         const r = await fetch('/api/pdf/pdf-to-word', { method: 'POST', body: fd });
         clearInterval(interval);
-        if (!r.ok) throw new Error('转换失败');
+        if (!r.ok) { const errData = await r.json().catch(() => ({})); throw new Error(errData.error || '转换失败'); }
 
         progressFill.style.width = '100%';
         progressText.textContent = '转换完成！';

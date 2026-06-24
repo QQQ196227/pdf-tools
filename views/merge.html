@@ -219,14 +219,6 @@
         <h3>合并选项</h3>
         <div class="option-group">
           <label>
-            <input type="checkbox" id="addPageNumbers" checked>
-            添加页码
-          </label>
-          <label>
-            <input type="checkbox" id="addBookmarks">
-            添加书签
-          </label>
-          <label>
             <input type="checkbox" id="compressOutput">
             压缩输出文件
           </label>
@@ -435,8 +427,6 @@
         });
 
         // 添加合并选项
-        formData.append('addPageNumbers', document.getElementById('addPageNumbers').checked);
-        formData.append('addBookmarks', document.getElementById('addBookmarks').checked);
         formData.append('compressOutput', document.getElementById('compressOutput').checked);
 
         const response = await fetch('/api/pdf/merge', {

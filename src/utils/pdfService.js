@@ -123,16 +123,22 @@ class PDFService {
    * @param {string} outputDir - 输出目录
    * @returns {string[]} - 图片路径数组
    */
-  async pdfToImages(inputPath, outputDir) {
+  async pdfToImages(inputPath, outputDir, options = {}) {
     try {
+      const format = options.format || 'jpeg';
+      const dpi = options.dpi || 150;
       const prefix = path.join(outputDir, 'page');
 
+      // 构建 pdftoppm 参数
+      const args = [`-${format}`, '-r', String(dpi), inputPath, prefix];
+
       // 使用 pdftoppm 转换（poppler-utils）
-      await execCommand('pdftoppm', ['-jpeg', '-r', '150', inputPath, prefix]);
+      await execCommand('pdftoppm', args);
 
       // 获取生成的图片文件
+      const ext = format === 'png' ? '.png' : '.jpg';
       const files = fs.readdirSync(outputDir)
-        .filter(f => f.startsWith('page') && f.endsWith('.jpg'))
+        .filter(f => f.startsWith('page') && f.endsWith(ext))
         .sort()
         .map(f => path.join(outputDir, f));
 
@@ -283,7 +289,12 @@ class PDFService {
    */
   async pdfToOffice(inputPath, outputPath, targetFormat, mode = 'editable') {
     try {
-      const scriptPath = path.join(SCRIPTS_DIR, `pdf_to_${targetFormat}.py`);
+      // 根据模式选择脚本
+      let scriptName = `pdf_to_${targetFormat}.py`;
+      if (targetFormat === 'docx' && mode === 'layout') {
+        scriptName = 'pdf_to_docx_layout.py';
+      }
+      const scriptPath = path.join(SCRIPTS_DIR, scriptName);
 
       // 检查 Python 脚本是否存在
       if (!fs.existsSync(scriptPath)) {
