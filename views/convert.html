@@ -629,9 +629,12 @@
 
     // 下载图片函数
     function downloadImage(imageUrl) {
+      // 使用绝对URL
+      const fullUrl = window.location.origin + imageUrl;
       const a = document.createElement('a');
-      a.href = imageUrl;
+      a.href = fullUrl;
       a.download = imageUrl.split('/').pop();
+      a.target = '_blank';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
