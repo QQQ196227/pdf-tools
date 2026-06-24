@@ -627,6 +627,16 @@
       document.body.removeChild(a);
     };
 
+    // 下载图片函数
+    function downloadImage(imageUrl) {
+      const a = document.createElement('a');
+      a.href = imageUrl;
+      a.download = imageUrl.split('/').pop();
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
     // 事件委托：下载按钮
     resultImages.addEventListener('click', (e) => {
       const imgBtn = e.target.closest('.download-image-btn');
