@@ -83,14 +83,10 @@ router.post('/to-images', uploadPdf.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: '请上传PDF文件' });
     fs.mkdirSync(outputDir, { recursive: true });
     const imagePaths = await pdfService.pdfToImages(req.file.path, outputDir);
-    const archiver = require('archiver');
-    const zipPath = path.join(outputDir, 'images.zip');
-    const output = fs.createWriteStream(zipPath);
-    const archive = archiver('zip');
-    archive.pipe(output);
-    imagePaths.forEach((img, i) => archive.file(img, { name: `page_${i + 1}.jpg` }));
-    await archive.finalize();
-    output.on('close', () => {
+    // archiver removed
+    const imageNames = imagePaths.map(p => path.basename(p));
+    cleanupFiles(req.file.path);
+    res.json({ images: imageNames });
       res.download(zipPath, 'pdf_images.zip', () => { cleanupFiles(req.file.path); fs.rm(outputDir, { recursive: true }, () => {}); });
     });
   } catch (error) {
