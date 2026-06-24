@@ -108,6 +108,9 @@ app.get('/extract', (req, res) => {
   sendHtmlWithNonce(res, path.join(__dirname, '../views/extract.html'));
 });
 
+app.get('/from-images', (req, res) => {
+  sendHtmlWithNonce(res, path.join(__dirname, '../views/convert.html'));
+});
 app.get('/rotate', (req, res) => {
   sendHtmlWithNonce(res, path.join(__dirname, '../views/rotate.html'));
 });
