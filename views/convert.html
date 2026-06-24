@@ -617,24 +617,12 @@
       }
     });
 
-    // 下载图片
-    window.downloadImage = function(imagePath) {
-      const a = document.createElement('a');
-      a.href = `/temp/${imagePath}`;
-      a.download = imagePath;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    };
-
     // 下载图片函数
     function downloadImage(imageUrl) {
-      // 使用绝对URL
       const fullUrl = window.location.origin + imageUrl;
       const a = document.createElement('a');
       a.href = fullUrl;
       a.download = imageUrl.split('/').pop();
-      a.target = '_blank';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
