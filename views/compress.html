@@ -415,17 +415,9 @@
       utils.showLoading(compressBtn);
 
       try {
-        // 模拟进度
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-          progress += Math.random() * 15;
-          if (progress > 90) {
-            clearInterval(progressInterval);
-            progress = 90;
-          }
-          progressFill.style.width = `${progress}%`;
-          progressText.textContent = `压缩中... ${Math.round(progress)}%`;
-        }, 200);
+        // 显示进度
+        progressFill.style.width = '50%';
+        progressText.textContent = '正在压缩，请稍候...';
 
         const formData = new FormData();
         formData.append('file', files[0]);
@@ -438,10 +430,9 @@
           body: formData
         });
 
-        clearInterval(progressInterval);
-
         if (!response.ok) {
-          throw new Error('压缩失败');
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || '压缩失败');
         }
 
         // 完成进度

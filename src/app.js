@@ -35,6 +35,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // 静态文件
 app.use(express.static(path.join(__dirname, '../public')));
+app.use('/temp', express.static(path.join(__dirname, '../temp')));
 
 // 创建上传目录
 const uploadDir = path.join(__dirname, '../uploads');
