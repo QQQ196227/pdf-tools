@@ -27,7 +27,18 @@ app.use(cors({
   methods: ['GET', 'POST'],
 }));
 app.use(helmet({
-  contentSecurityPolicy: false, // 临时禁用 CSP，避免阻止字体和样式加载
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],  // 允许内联脚本（nonce方式后续优化）
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],  // 允许内联样式和Google Fonts
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],  // 允许Google Fonts
+      imgSrc: ["'self'", "data:", "blob:"],  // 允许图片
+      connectSrc: ["'self'"],  // API请求
+      objectSrc: ["'none'"],  // 禁止插件
+      baseUri: ["'self'"],  // 限制base标签
+    },
+  },
 }));
 app.use(compression());
 app.use(express.json());
