@@ -125,12 +125,14 @@ class PDFService {
    */
   async pdfToImages(inputPath, outputDir, options = {}) {
     try {
-      const format = options.format || 'jpeg';
+      // 前端传 jpg/png，pdftoppm 需要 jpeg/png
+      const inputFormat = options.format || 'jpeg';
+      const pdftoppmFormat = inputFormat === 'jpg' ? 'jpeg' : inputFormat;
       const dpi = options.dpi || 150;
       const prefix = path.join(outputDir, 'page');
 
       // 构建 pdftoppm 参数
-      const args = [`-${format}`, '-r', String(dpi), inputPath, prefix];
+      const args = [`-${pdftoppmFormat}`, '-r', String(dpi), inputPath, prefix];
 
       // 使用 pdftoppm 转换（poppler-utils）
       await execCommand('pdftoppm', args);
