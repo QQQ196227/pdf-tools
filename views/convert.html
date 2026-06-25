@@ -531,7 +531,8 @@
           clearInterval(progressInterval);
 
           if (!response.ok) {
-            throw new Error('转换失败');
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || '转换失败');
           }
 
           const result = await response.json();
@@ -570,7 +571,8 @@
           clearInterval(progressInterval);
 
           if (!response.ok) {
-            throw new Error('转换失败');
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || '转换失败');
           }
 
           // 完成进度
