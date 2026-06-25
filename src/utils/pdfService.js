@@ -138,7 +138,7 @@ class PDFService {
       await execCommand('pdftoppm', args);
 
       // 获取生成的图片文件
-      const ext = format === 'png' ? '.png' : '.jpg';
+      const ext = inputFormat === 'png' ? '.png' : '.jpg';
       const files = fs.readdirSync(outputDir)
         .filter(f => f.startsWith('page') && f.endsWith(ext))
         .sort()
