@@ -132,6 +132,19 @@ app.get('/pdf-to-ppt', (req, res) => {
   sendHtmlWithNonce(res, path.join(__dirname, '../views/pdf-to-ppt.html'));
 });
 
+// 法律页面路由
+app.get('/privacy', (req, res) => {
+  sendHtmlWithNonce(res, path.join(__dirname, '../views/privacy.html'));
+});
+
+app.get('/terms', (req, res) => {
+  sendHtmlWithNonce(res, path.join(__dirname, '../views/terms.html'));
+});
+
+app.get('/contact', (req, res) => {
+  sendHtmlWithNonce(res, path.join(__dirname, '../views/contact.html'));
+});
+
 app.use((err, req, res, next) => {
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ error: '文件大小超过限制（最大100MB）' });
