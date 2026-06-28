@@ -131,14 +131,10 @@ class PDFService {
       const dpi = options.dpi || 150;
       const prefix = path.join(outputDir, 'page');
 
-      // 使用 pdftoppm 转换（poppler-utils）
-      const args = [
-        `-${pdftoppmFormat}`,
-        '-r', String(dpi),
-        inputPath,
-        prefix
-      ];
+      // 构建 pdftoppm 参数
+      const args = [`-${pdftoppmFormat}`, '-r', String(dpi), inputPath, prefix];
 
+      // 使用 pdftoppm 转换（poppler-utils）
       await execCommand('pdftoppm', args);
 
       // 获取生成的图片文件
