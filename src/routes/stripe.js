@@ -26,7 +26,7 @@ router.post('/create-subscription', async (req, res) => {
     // Create subscription
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
-      items: [{ price: 'price_1234567890' }], // You need to create a price in Stripe dashboard
+      items: [{ price: 'price_1TogqQHLa8xNvDpHsHc9unLM' }],
       expand: ['latest_invoice.payment_intent'],
     });
 
