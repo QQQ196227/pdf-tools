@@ -207,92 +207,95 @@
 
         // Create card Element
         cardElement = elements.create('card', {
-      style: {
-        base: {
-          fontSize: '16px',
-          color: '#374151',
-          '::placeholder': {
-            color: '#9ca3af',
-          },
-        },
-        invalid: {
-          color: '#ef4444',
-        },
-      },
-    });
-
-    // Mount card Element
-    cardElement.mount('#card-element');
-
-    // Handle form submission
-    const form = document.getElementById('payment-form');
-    const submitButton = document.getElementById('submit-button');
-    const cardErrors = document.getElementById('card-errors');
-    const paymentSuccess = document.getElementById('payment-success');
-
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-
-      // Disable submit button
-      submitButton.disabled = true;
-      submitButton.textContent = 'Processing...';
-
-      // Create payment method
-      const { error, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardElement,
-      });
-
-      if (error) {
-        // Show error
-        cardErrors.textContent = error.message;
-        cardErrors.style.display = 'block';
-        submitButton.disabled = false;
-        submitButton.textContent = 'Subscribe Now - $4.99/month';
-      } else {
-        // Send payment method to server
-        try {
-          const response = await fetch('/api/stripe/create-subscription', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
+          style: {
+            base: {
+              fontSize: '16px',
+              color: '#374151',
+              '::placeholder': {
+                color: '#9ca3af',
+              },
             },
-            body: JSON.stringify({
-              paymentMethodId: paymentMethod.id,
-            }),
+            invalid: {
+              color: '#ef4444',
+            },
+          },
+        });
+
+        // Mount card Element
+        cardElement.mount('#card-element');
+
+        // Handle form submission
+        const form = document.getElementById('payment-form');
+        const submitButton = document.getElementById('submit-button');
+        const cardErrors = document.getElementById('card-errors');
+        const paymentSuccess = document.getElementById('payment-success');
+
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+
+          // Disable submit button
+          submitButton.disabled = true;
+          submitButton.textContent = 'Processing...';
+
+          // Create payment method
+          const { error, paymentMethod } = await stripe.createPaymentMethod({
+            type: 'card',
+            card: cardElement,
           });
 
-          const result = await response.json();
-
-          if (result.error) {
-            cardErrors.textContent = result.error;
+          if (error) {
+            // Show error
+            cardErrors.textContent = error.message;
             cardErrors.style.display = 'block';
             submitButton.disabled = false;
             submitButton.textContent = 'Subscribe Now - $4.99/month';
           } else {
-            // Payment successful
-            paymentSuccess.style.display = 'block';
-            submitButton.textContent = 'Payment Successful!';
-            submitButton.style.background = '#10b981';
-          }
-        } catch (err) {
-          cardErrors.textContent = 'An error occurred. Please try again.';
-          cardErrors.style.display = 'block';
-          submitButton.disabled = false;
-          submitButton.textContent = 'Subscribe Now - $4.99/month';
-        }
-      }
-    });
+            // Send payment method to server
+            try {
+              const response = await fetch('/api/stripe/create-subscription', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  paymentMethodId: paymentMethod.id,
+                }),
+              });
 
-    // Handle real-time validation errors from the card Element
-    cardElement.on('change', (event) => {
-      if (event.error) {
-        cardErrors.textContent = event.error.message;
-        cardErrors.style.display = 'block';
-      } else {
-        cardErrors.style.display = 'none';
+              const result = await response.json();
+
+              if (result.error) {
+                cardErrors.textContent = result.error;
+                cardErrors.style.display = 'block';
+                submitButton.disabled = false;
+                submitButton.textContent = 'Subscribe Now - $4.99/month';
+              } else {
+                // Payment successful
+                paymentSuccess.style.display = 'block';
+                submitButton.textContent = 'Payment Successful!';
+                submitButton.style.background = '#10b981';
+              }
+            } catch (err) {
+              cardErrors.textContent = 'An error occurred. Please try again.';
+              cardErrors.style.display = 'block';
+              submitButton.disabled = false;
+              submitButton.textContent = 'Subscribe Now - $4.99/month';
+            }
+          }
+        });
+
+        // Handle real-time validation errors from the card Element
+        cardElement.on('change', (event) => {
+          if (event.error) {
+            cardErrors.textContent = event.error.message;
+            cardErrors.style.display = 'block';
+          } else {
+            cardErrors.style.display = 'none';
+          }
+        });
+      } catch (err) {
+        console.error('Failed to initialize Stripe:', err);
       }
-    });
     }
 
     // Initialize Stripe when page loads
