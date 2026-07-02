@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -7,6 +8,7 @@ const path = require('path');
 const fs = require('fs');
 
 const pdfRoutes = require('./routes/pdf');
+const stripeRoutes = require('./routes/stripe');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -78,6 +80,7 @@ setInterval(() => {
 }, CLEANUP_INTERVAL);
 
 app.use('/api/pdf', pdfRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 function sendHtmlWithNonce(res, filePath) {
   fs.readFile(filePath, 'utf8', (err, html) => {
@@ -143,6 +146,10 @@ app.get('/terms', (req, res) => {
 
 app.get('/contact', (req, res) => {
   sendHtmlWithNonce(res, path.join(__dirname, '../views/contact.html'));
+});
+
+app.get('/checkout', (req, res) => {
+  sendHtmlWithNonce(res, path.join(__dirname, '../views/checkout.html'));
 });
 
 app.use((err, req, res, next) => {

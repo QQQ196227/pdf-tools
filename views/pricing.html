@@ -403,14 +403,7 @@
   <script>
     // 处理升级
     document.getElementById('upgradeBtn').addEventListener('click', () => {
-      fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId: 'price_monthly' }),
-      })
-      .then(r => r.json())
-      .then(data => { if (data.url) window.location.href = data.url; })
-      .catch(() => utils.showMessage('支付处理失败，请稍后重试', 'error'));
+      window.location.href = '/checkout';
     });
 
     // 处理企业版
