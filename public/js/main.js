@@ -191,6 +191,103 @@ class FileUploader {
   }
 }
 
+// 用户状态管理
+const userManager = {
+  email: localStorage.getItem('userEmail') || null,
+  isPremium: false,
+
+  // 初始化用户状态
+  async init() {
+    if (this.email) {
+      await this.checkPremiumStatus();
+    }
+    this.updateUI();
+  },
+
+  // 检查用户是否是付费用户
+  async checkPremiumStatus() {
+    try {
+      const response = await fetch(`/api/user/check-premium?email=${encodeURIComponent(this.email)}`);
+      const data = await response.json();
+      this.isPremium = data.isPremium;
+    } catch (error) {
+      console.error('Error checking premium status:', error);
+      this.isPremium = false;
+    }
+  },
+
+  // 设置用户邮箱
+  setEmail(email) {
+    this.email = email;
+    localStorage.setItem('userEmail', email);
+    this.checkPremiumStatus().then(() => this.updateUI());
+  },
+
+  // 更新UI
+  updateUI() {
+    // 更新导航栏显示
+    const userStatus = document.getElementById('user-status');
+    if (userStatus) {
+      if (this.email) {
+        userStatus.innerHTML = `
+          <span class="user-email">${this.email}</span>
+          <span class="user-plan ${this.isPremium ? 'premium' : 'free'}">
+            ${this.isPremium ? 'Premium' : 'Free'}
+          </span>
+        `;
+      } else {
+        userStatus.innerHTML = '<a href="/login">登录</a>';
+      }
+    }
+
+    // 根据用户类型显示/隐藏广告
+    const adElements = document.querySelectorAll('.ad-container');
+    adElements.forEach(ad => {
+      ad.style.display = this.isPremium ? 'none' : 'block';
+    });
+
+    // 根据用户类型显示/隐藏功能限制提示
+    const limitMessages = document.querySelectorAll('.limit-message');
+    limitMessages.forEach(msg => {
+      msg.style.display = this.isPremium ? 'none' : 'block';
+    });
+  },
+
+  // 检查是否可以处理文件
+  canProcessFile(fileSize) {
+    if (this.isPremium) {
+      return { allowed: true, maxSize: 100 * 1024 * 1024 }; // 100MB
+    }
+    return { allowed: true, maxSize: 10 * 1024 * 1024 }; // 10MB
+  },
+
+  // 检查每日处理次数
+  async canProcessToday() {
+    if (this.isPremium) {
+      return { allowed: true, remaining: Infinity };
+    }
+
+    // 免费用户每天3次
+    const today = new Date().toDateString();
+    const processCount = parseInt(localStorage.getItem(`processCount_${today}`) || '0');
+
+    if (processCount >= 3) {
+      return { allowed: false, remaining: 0 };
+    }
+
+    return { allowed: true, remaining: 3 - processCount };
+  },
+
+  // 增加处理次数
+  incrementProcessCount() {
+    if (this.isPremium) return;
+
+    const today = new Date().toDateString();
+    const processCount = parseInt(localStorage.getItem(`processCount_${today}`) || '0');
+    localStorage.setItem(`processCount_${today}`, (processCount + 1).toString());
+  }
+};
+
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
   // 添加动画样式
@@ -208,8 +305,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   `;
   document.head.appendChild(style);
+
+  // 初始化用户状态
+  userManager.init();
 });
 
 // 导出工具
 window.utils = utils;
 window.FileUploader = FileUploader;
+window.userManager = userManager;

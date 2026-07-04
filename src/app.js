@@ -9,6 +9,7 @@ const fs = require('fs');
 
 const pdfRoutes = require('./routes/pdf');
 const stripeRoutes = require('./routes/stripe');
+const userRoutes = require('./routes/user');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -82,6 +83,7 @@ setInterval(() => {
 
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/stripe', stripeRoutes);
+app.use('/api/user', userRoutes);
 
 function sendHtmlWithNonce(res, filePath) {
   fs.readFile(filePath, 'utf8', (err, html) => {
