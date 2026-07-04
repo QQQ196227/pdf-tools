@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - PDF Tools Matrix</title>
+  <meta name="description" content="Login to your PDF Tools Matrix account.">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <style>
+    .auth-container {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .auth-card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .auth-card h1 {
+      text-align: center;
+      color: #1f2937;
+      margin-bottom: 30px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .auth-button {
+      width: 100%;
+      padding: 15px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .auth-button:hover {
+      background: #4338ca;
+    }
+
+    .auth-link {
+      text-align: center;
+      margin-top: 20px;
+      color: #6b7280;
+    }
+
+    .auth-link a {
+      color: #4f46e5;
+      text-decoration: none;
+    }
+
+    .auth-link a:hover {
+      text-decoration: underline;
+    }
+
+    .error-message {
+      color: #ef4444;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .success-message {
+      color: #10b981;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo">PDF Tools Matrix</a>
+      <ul class="nav-links">
+        <li><a href="/merge">PDF Merge</a></li>
+        <li><a href="/compress">PDF Compress</a></li>
+        <li><a href="/convert">PDF Convert</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Login Content -->
+  <main class="tool-page">
+    <div class="auth-container">
+      <div class="auth-card">
+        <h1>Login</h1>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required placeholder="Enter your email">
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required placeholder="Enter your password">
+          </div>
+
+          <button type="submit" class="auth-button">Login</button>
+
+          <div id="error-message" class="error-message"></div>
+          <div id="success-message" class="success-message"></div>
+        </form>
+
+        <div class="auth-link">
+          Don't have an account? <a href="/register">Register</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 PDF Tools Matrix - Free Online PDF Processing Tools</p>
+      <div class="footer-links">
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/terms">Terms of Service</a>
+        <a href="/contact">Contact Us</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    const form = document.getElementById('login-form');
+    const errorMessage = document.getElementById('error-message');
+    const successMessage = document.getElementById('success-message');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch('/api/user/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+          errorMessage.textContent = result.error;
+          errorMessage.style.display = 'block';
+          successMessage.style.display = 'none';
+        } else {
+          // 登录成功
+          localStorage.setItem('userEmail', email);
+          localStorage.setItem('userToken', result.token);
+
+          successMessage.textContent = 'Login successful! Redirecting...';
+          successMessage.style.display = 'block';
+          errorMessage.style.display = 'none';
+
+          // 跳转到主页
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1000);
+        }
+      } catch (error) {
+        errorMessage.textContent = 'An error occurred. Please try again.';
+        errorMessage.style.display = 'block';
+        successMessage.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -155,6 +155,14 @@ app.get('/checkout', (req, res) => {
   sendHtmlWithNonce(res, path.join(__dirname, '../views/checkout.html'));
 });
 
+app.get('/login', (req, res) => {
+  sendHtmlWithNonce(res, path.join(__dirname, '../views/login.html'));
+});
+
+app.get('/register', (req, res) => {
+  sendHtmlWithNonce(res, path.join(__dirname, '../views/register.html'));
+});
+
 app.use((err, req, res, next) => {
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ error: '文件大小超过限制（最大100MB）' });
